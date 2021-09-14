@@ -6,12 +6,14 @@ namespace Alura.LeilaoOnline.Core
 
     public enum EstadoLeilao
     {
+        LeilaoAntesDoPregao,
         LeilaoEmAndamento,
         LeilaoFinalizado
     }
 
     public class Leilao
     {
+        private Interessada _ultimoCliente;
         private IList<Lance> _lances;
         public IEnumerable<Lance> Lances => _lances;
         public string Peca { get; }
@@ -22,28 +24,39 @@ namespace Alura.LeilaoOnline.Core
         {
             Peca = peca;
             _lances = new List<Lance>();
-            Estado = EstadoLeilao.LeilaoEmAndamento;
+            Estado = EstadoLeilao.LeilaoAntesDoPregao;
+        }
+
+        private bool NovoLanceAceito(Interessada cliente, double valor)
+        {
+            return (Estado.Equals(EstadoLeilao.LeilaoEmAndamento)) && (cliente != _ultimoCliente);
         }
 
         public void RecebeLance(Interessada cliente, double valor)
         {
-            if(Estado.Equals(EstadoLeilao.LeilaoEmAndamento))
+
+            if (NovoLanceAceito(cliente, valor))
+            {
                 _lances.Add(new Lance(cliente, valor));
+                _ultimoCliente = cliente;
+            }
         }
 
-        public void IniciaPregao()
-        {
-
-        }
-
-        public void TerminaPregao()
-        {
-            Ganhador = Lances
-                .DefaultIfEmpty(new Lance(null, 0))
-                .OrderBy(x => x.Valor)
-                .LastOrDefault();
-
-            Estado = EstadoLeilao.LeilaoFinalizado;
-        }
     }
+
+    public void IniciaPregao()
+    {
+        Estado = EstadoLeilao.LeilaoEmAndamento;
+    }
+
+    public void TerminaPregao()
+    {
+        Ganhador = Lances
+            .DefaultIfEmpty(new Lance(null, 0))
+            .OrderBy(x => x.Valor)
+            .LastOrDefault();
+
+        Estado = EstadoLeilao.LeilaoFinalizado;
+    }
+}
 }
